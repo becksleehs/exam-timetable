@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지필평가 전자칠판</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #0f172a;
+            color: #ffffff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem 2rem;
+        }
+
+        /* Header Layout */
+        header {
+            flex-shrink: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #1e293b;
+            padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+        }
+
+        .header-titles {
+            display: flex;
+            align-items: baseline;
+            gap: 2rem;
+        }
+
+        #displayTitleLeft {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+        }
+
+        #displayTitleRight {
+            font-size: 2.8rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+        }
+
+        #displaySubtitle {
+            font-size: 1.3rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        /* Main Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 0.8fr 1.2fr;
+            gap: 2rem;
+            flex: 1;
+            min-height: 0;
+        }
+
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 0;
+        }
+
+        .notice-section {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            text-align: center;
+        }
+
+        .date-box {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 1.2rem;
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        #displayNotices {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 0.75rem;
+            text-align: left;
+            padding-right: 0.5rem;
+        }
+
+        .status-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .status-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            padding: 0.6rem 1.2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-label { font-size: 1.2rem; font-weight: 800; color: #ffffff; }
+        .status-value { font-size: 2.2rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; line-height: 1; color: #ffffff; }
+
+        .absent-info-box {
+            background: rgba(30, 41, 59, 0.5);
+            padding: 0.7rem 1rem;
+            border-radius: 0.8rem;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            min-height: 0;
+        }
+
+        .schedule-card {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        table { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+        th { color: #ffffff; font-size: 1.2rem; padding: 12px; border-bottom: 2px solid #334155; opacity: 0.8; }
+        td { padding: 15px 10px; text-align: center; color: #ffffff; }
+        
+        .active-row td {
+            background: rgba(59, 130, 246, 0.15);
+            border-top: 2px solid #3b82f6;
+            border-bottom: 2px solid #3b82f6;
+            color: #ffffff;
+        }
+        .active-row td:first-child { border-left: 2px solid #3b82f6; border-top-left-radius: 0.75rem; border-bottom-left-radius: 0.75rem; }
+        .active-row td:last-child { border-right: 2px solid #3b82f6; border-top-right-radius: 0.75rem; border-bottom-right-radius: 0.75rem; }
+        .active-row .td-subject { color: #fbbf24 !important; text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+
+        .td-label { font-size: 1.8rem; font-weight: 900; color: #ffffff; opacity: 0.9; }
+        .td-subject { font-size: 2.5rem; font-weight: 900; color: #60a5fa; }
+        .td-time { font-family: monospace; font-size: 2.2rem; font-weight: 700; color: #ffffff; }
+
+        /* Clock Area */
+        .clock-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3rem;
+            min-height: 0;
+        }
+
+        .digital-clock-container {
+            background: rgba(15, 23, 42, 0.8);
+            border: 2px solid #1e293b;
+            padding: 2.5rem 2rem;
+            border-radius: 2.5rem;
+            text-align: center;
+            min-width: 400px;
+        }
+
+        #digitalTime {
+            font-size: 6.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 900;
+            color: #fbbf24; 
+            letter-spacing: -4px;
+            line-height: 1;
+            text-shadow: 0 0 40px rgba(251, 191, 36, 0.4);
+        }
+
+        .clock-container {
+            position: relative;
+            width: min(35vh, 380px); 
+            aspect-ratio: 1 / 1;
+            border: 8px solid #1e293b;
+            border-radius: 50%;
+            background: #020617;
+        }
+
+        .clock-face { position: relative; width: 100%; height: 100%; }
+        .hand { position: absolute; bottom: 50%; left: 50%; transform-origin: bottom; z-index: 10; }
+        .hour-hand { width: 7px; height: 28%; background: #ffffff; margin-left: -3.5px; border-radius: 4px; }
+        .min-hand { width: 4px; height: 40%; background: #ffffff; opacity: 0.8; margin-left: -2px; border-radius: 4px; }
+        .sec-hand { width: 2px; height: 45%; background: #ef4444; margin-left: -1px; }
+        .center-dot { position: absolute; top: 50%; left: 50%; width: 14px; height: 14px; background: #ef4444; border-radius: 50%; transform: translate(-50%, -50%); z-index: 20; border: 2px solid #020617; }
+
+        .tick { position: absolute; width: 2px; height: 10px; background: #334155; top: 6px; left: 50%; }
+        .tick-major { width: 3px; height: 16px; background: #ffffff; opacity: 0.5; }
+        .clock-number { position: absolute; width: 100%; height: 100%; text-align: center; font-size: 1.5rem; font-weight: 400; color: #ffffff; padding: 20px; }
+
+        .notice-item { display: flex; align-items: flex-start; margin-bottom: 0.6rem; }
+        .notice-dot { color: #3b82f6; margin-right: 10px; margin-top: 6px; font-size: 0.8rem; }
+
+        /* Modal Settings */
+        #settingsModal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 100; align-items: center; justify-content: center; backdrop-filter: blur(10px);
+        }
+        .modal-content { background: #ffffff; color: #1e293b; padding: 2rem; border-radius: 2rem; width: 800px; max-height: 90vh; overflow-y: auto; }
+        .input-group label { display: block; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 4px; }
+        .input-group input, .input-group textarea { width: 100%; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; margin-bottom: 12px; color: #1e293b; }
+
+        .floating-btns { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; gap: 0.8rem; z-index: 50; }
+        .floating-btn { width: 3.5rem; height: 3.5rem; border-radius: 50%; display: flex; items-center: center; justify-content: center; color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.3); transition: all 0.2s; }
+        .floating-btn:hover { transform: translateY(-3px); }
+        .btn-settings { background-color: #4b5563; }
+        .btn-fullscreen { background-color: #2563eb; }
+
+        #displayNotices::-webkit-scrollbar { width: 6px; }
+        #displayNotices::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-titles">
+            <div id="displayTitleLeft">순천승주중학교</div>
+            <div id="displayTitleRight">2026학년도 제1학기 중간고사</div>
+        </div>
+        <div id="displaySubtitle">침착하게 평소의 실력을 발휘하세요.</div>
+    </header>
+
+    <div class="dashboard-grid">
+        <div class="left-column">
+            <section class="notice-section">
+                <div class="date-box">
+                    <p id="digitalDate" class="text-3xl font-black text-white tracking-tight"></p>
+                </div>
+                <h2 class="text-2xl font-black mb-4 flex items-center justify-center text-white border-b border-white/10 pb-4">
+                    <i class="fas fa-file-signature mr-3 text-blue-400"></i> 유의사항
+                </h2>
+                <div id="displayNotices"></div>
+            </section>
+            
+            <div class="status-column">
+                <div class="status-card"><span class="status-label">총원</span><span id="displayTotal" class="status-value">0</span></div>
+                <div class="status-card"><span class="status-label">응시</span><span id="displayPresent" class="status-value">0</span></div>
+                <div class="status-card"><span class="status-label text-red-400">결시</span><span id="displayAbsent" class="status-value text-red-500">0</span></div>
+                <div class="absent-info-box">
+                    <p class="text-[10px] font-bold text-slate-400 mb-0.5 uppercase tracking-widest">결시자 명단</p>
+                    <p id="displayAbsentInfo" class="text-lg font-black text-white">-</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-column">
+            <div class="schedule-card">
+                <h2 class="text-xl font-black mb-3 text-center tracking-[0.8em] text-white/50 pl-4">시 간 표</h2>
+                <div class="bg-black/20 rounded-lg overflow-hidden border border-white/5">
+                    <table>
+                        <thead>
+                            <tr><th>교시</th><th>과목</th><th>시험시간</th></tr>
+                        </thead>
+                        <tbody id="displaySchedule"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="clock-area">
+                <div class="digital-clock-container"><div id="digitalTime">00:00:00</div></div>
+                <div class="clock-container">
+                    <div class="clock-face" id="clockFace">
+                        <div class="center-dot"></div>
+                        <div class="hand hour-hand" id="hourHand"></div>
+                        <div class="hand min-hand" id="minHand"></div>
+                        <div class="hand sec-hand" id="secHand"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 하단 플로팅 버튼 영역 -->
+    <div class="floating-btns">
+        <button onclick="toggleFullScreen()" class="floating-btn btn-fullscreen" title="전체화면">
+            <i class="fas fa-expand-alt m-auto text-xl"></i>
+        </button>
+        <button onclick="openSettings()" class="floating-btn btn-settings" title="설정">
+            <i class="fas fa-cog m-auto text-xl"></i>
+        </button>
+    </div>
+
+    <!-- 설정 모달 -->
+    <div id="settingsModal">
+        <div class="modal-content">
+            <h2 class="text-xl font-black mb-4 border-b pb-2">대시보드 설정</h2>
+            <div class="grid grid-cols-2 gap-3">
+                <div class="input-group"><label>학교명</label><input type="text" id="setSchoolName"></div>
+                <div class="input-group"><label>시험 정보</label><input type="text" id="setExamInfo"></div>
+                <div class="input-group"><label>총원 (명)</label><input type="number" id="setTotal"></div>
+                <div class="input-group"><label>결시 인원 (명)</label><input type="number" id="setAbsentCount"></div>
+                <div class="input-group col-span-2"><label>결시생 명단</label><input type="text" id="setAbsentInfo"></div>
+                <div class="input-group col-span-2"><label>유의사항 (줄바꿈 구분)</label><textarea id="setNotices" rows="6"></textarea></div>
+                <div class="col-span-2 bg-slate-50 p-3 rounded-lg border">
+                    <p class="font-bold text-sm mb-2">시간표 관리</p>
+                    <div id="scheduleInputs" class="space-y-1"></div>
+                </div>
+            </div>
+            <button onclick="applySettings()" class="w-full bg-blue-600 text-white font-black py-3 mt-4 rounded-xl">설정 적용</button>
+        </div>
+    </div>
+
+    <script>
+        // 기본값 설정
+        const defaultData = {
+            schoolName: "순천승주중학교",
+            examInfo: "2026학년도 제1학기 중간고사",
+            subtitle: "침착하게 평소의 실력을 발휘하세요.",
+            total: 28, absentCount: 0, absentInfo: "결시 없음",
+            notices: [
+                "모든 전자기기는 전원을 끄고 가방에 넣어 제출하세요.",
+                "책상 위에는 컴퓨터용 사인펜, 필기구, 신분증만 가능합니다.",
+                "서답형 답안은 검은색 볼펜을 사용하여 작성하세요.",
+                "종료 10분 전에는 OMR 답안지 교체가 불가능합니다.",
+                "부정행위 적발 시 학칙에 의거 엄중 처벌됩니다.",
+                "질문이 있는 경우 조용히 손을 들어 의사를 표시하세요."
+            ],
+            schedule: [
+                { label: "1교시", start: "09:00", end: "09:50", subject: "국어" },
+                { label: "2교시", start: "10:10", end: "11:00", subject: "수학" },
+                { label: "3교시", start: "11:20", end: "12:10", subject: "영어" },
+                { label: "4교시", start: "13:10", end: "14:00", subject: "과학" }
+            ]
+        };
+
+        let stored = localStorage.getItem('examBoardV17');
+        let appData = stored ? JSON.parse(stored) : defaultData;
+
+        if(!appData.schoolName) appData.schoolName = defaultData.schoolName;
+        if(!appData.examInfo) appData.examInfo = defaultData.examInfo;
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        function createClockNumbers() {
+            const face = document.getElementById('clockFace');
+            if (!face) return;
+            face.querySelectorAll('.clock-number, .tick').forEach(el => el.remove());
+            const size = Math.min(window.innerHeight * 0.35, 380);
+            for (let i = 0; i < 60; i++) {
+                const tick = document.createElement('div');
+                tick.className = 'tick' + (i % 5 === 0 ? ' tick-major' : '');
+                tick.style.transform = `translateX(-50%) rotate(${i * 6}deg)`;
+                tick.style.transformOrigin = `50% ${size / 2 - 6}px`;
+                face.appendChild(tick);
+            }
+            for (let i = 1; i <= 12; i++) {
+                const num = document.createElement('div');
+                num.className = 'clock-number';
+                num.style.transform = `rotate(${i * 30}deg)`;
+                const span = document.createElement('span');
+                span.innerText = i;
+                span.style.display = 'inline-block';
+                span.style.transform = `rotate(-${i * 30}deg)`;
+                num.appendChild(span);
+                face.appendChild(num);
+            }
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const s = now.getSeconds(), m = now.getMinutes(), h = now.getHours();
+            document.getElementById('secHand').style.transform = `translateX(-50%) rotate(${(s/60)*360}deg)`;
+            document.getElementById('minHand').style.transform = `translateX(-50%) rotate(${(m/60)*360 + (s/60)*6}deg)`;
+            document.getElementById('hourHand').style.transform = `translateX(-50%) rotate(${(h/12)*360 + (m/60)*30}deg)`;
+            document.getElementById('digitalTime').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            document.getElementById('digitalDate').innerText = `${now.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })} (${now.toLocaleDateString('ko-KR', { weekday: 'short' })})`;
+            checkCurrentSchedule(h, m);
+        }
+
+        function checkCurrentSchedule(h, m) {
+            const nowTime = h * 60 + m;
+            const rows = document.querySelectorAll('#displaySchedule tr');
+            appData.schedule.forEach((s, i) => {
+                const [sh, sm] = s.start.split(':').map(Number);
+                const [eh, em] = s.end.split(':').map(Number);
+                const st = sh * 60 + sm;
+                const et = eh * 60 + em;
+                if (nowTime >= st && nowTime <= et) rows[i]?.classList.add('active-row');
+                else rows[i]?.classList.remove('active-row');
+            });
+        }
+
+        function renderDashboard() {
+            document.getElementById('displayTitleLeft').innerText = appData.schoolName;
+            document.getElementById('displayTitleRight').innerText = appData.examInfo;
+            document.getElementById('displayTotal').innerText = appData.total;
+            document.getElementById('displayAbsent').innerText = appData.absentCount;
+            document.getElementById('displayPresent').innerText = appData.total - appData.absentCount;
+            document.getElementById('displayAbsentInfo').innerText = appData.absentInfo;
+            document.getElementById('displaySubtitle').innerText = appData.subtitle;
+            document.getElementById('displayNotices').innerHTML = appData.notices.map(item => `<div class="notice-item"><span class="notice-dot">●</span><span class="text-xl font-bold text-white">${item}</span></div>`).join('');
+            document.getElementById('displaySchedule').innerHTML = appData.schedule.map(s => `<tr><td class="td-label">${s.label}</td><td class="td-subject">${s.subject}</td><td class="td-time">${s.start} ~ ${s.end}</td></tr>`).join('');
+            
+            localStorage.setItem('examBoardV17', JSON.stringify(appData));
+        }
+
+        function openSettings() {
+            document.getElementById('setSchoolName').value = appData.schoolName;
+            document.getElementById('setExamInfo').value = appData.examInfo;
+            document.getElementById('setTotal').value = appData.total;
+            document.getElementById('setAbsentCount').value = appData.absentCount;
+            document.getElementById('setAbsentInfo').value = appData.absentInfo;
+            document.getElementById('setNotices').value = appData.notices.join('\n');
+            document.getElementById('scheduleInputs').innerHTML = appData.schedule.map((s, i) => `<div class="flex gap-1"><input class="w-16" type="text" id="schL_${i}" value="${s.label}"><input class="flex-1" type="text" id="schS_${i}" value="${s.subject}"><input class="w-28" type="text" id="schT_${i}" value="${s.start}-${s.end}"></div>`).join('');
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function applySettings() {
+            appData.schoolName = document.getElementById('setSchoolName').value;
+            appData.examInfo = document.getElementById('setExamInfo').value;
+            appData.total = parseInt(document.getElementById('setTotal').value) || 0;
+            appData.absentCount = parseInt(document.getElementById('setAbsentCount').value) || 0;
+            appData.absentInfo = document.getElementById('setAbsentInfo').value;
+            appData.notices = document.getElementById('setNotices').value.split('\n').filter(l => l.trim() !== "");
+            appData.schedule = appData.schedule.map((s, i) => {
+                const t = document.getElementById(`schT_${i}`).value.split(/[-~]/);
+                return { 
+                    label: document.getElementById(`schL_${i}`).value, 
+                    subject: document.getElementById(`schS_${i}`).value, 
+                    start: t[0]?.trim() || "00:00", 
+                    end: t[1]?.trim() || "00:00" 
+                };
+            });
+            renderDashboard();
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        window.onload = () => { 
+            createClockNumbers(); 
+            renderDashboard(); 
+            setInterval(updateTime, 1000); 
+            updateTime(); 
+        };
+        window.onresize = createClockNumbers;
+    </script>
+</body>
+</html>
